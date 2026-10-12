@@ -1,9 +1,9 @@
 #include "shapes.hpp"
 
 novikov::Circle::Circle(int r, int x, int y):
-    radius_(r),
-    x_(x),
-    y_(y)
+  radius_(r),
+  x_(x),
+  y_(y)
 {}
 
 int novikov::Circle::getX() const
@@ -22,10 +22,10 @@ int novikov::Circle::getRadius() const
 }
 
 novikov::Polygon::Polygon(int x1, int y1, int x2, int y2):
-    min_x_(x1),
-    min_y_(y1),
-    max_x_(x2),
-    max_y_(y2)
+  min_x_(x1),
+  min_y_(y1),
+  max_x_(x2),
+  max_y_(y2)
 {}
 
 int novikov::Polygon::getMaxX() const

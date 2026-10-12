@@ -116,7 +116,6 @@ double_pair novikov::area(const c_vec &shapes, const Polygon &pg, std::size_t th
   const double pg_height = static_cast< double >(pg.getMaxY() - pg.getMinY());
   const double total_area = pg_width * pg_height;
   const double all_area = (total_area * static_cast< double >(total_all)) / static_cast< double >(tries);
-  const double intersection_area =
-      (total_area * static_cast< double >(total_intersection)) / static_cast< double >(tries);
-  return {all_area, intersection_area};
+  const double intersect_area = (total_area * static_cast< double >(total_intersection)) / static_cast< double >(tries);
+  return {all_area, intersect_area};
 }
