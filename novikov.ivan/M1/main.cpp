@@ -89,6 +89,6 @@ int main(int argc, char *argv[])
     return status_error_invalid_input;
   }
 
-  const double_pair res = novikov::area(figures, pg, threads, tries, seed);
+  const std::pair< double, double > res = novikov::area(figures, pg, threads, tries, seed);
   std::cout << res.first << " " << res.second << "\n";
 }
