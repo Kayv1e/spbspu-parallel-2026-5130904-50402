@@ -34,10 +34,10 @@ namespace novikov
     void setMinY(int y);
 
   private:
-    int max_x_;
-    int max_y_;
     int min_x_;
     int min_y_;
+    int max_x_;
+    int max_y_;
   };
 }
 

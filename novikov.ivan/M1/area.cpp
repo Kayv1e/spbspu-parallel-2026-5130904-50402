@@ -9,6 +9,8 @@
 #include <vector>
 #include "shapes.hpp"
 
+using novikov::double_pair;
+
 novikov::c_vec novikov::readInput(Polygon &pg)
 {
   c_vec shapes;
