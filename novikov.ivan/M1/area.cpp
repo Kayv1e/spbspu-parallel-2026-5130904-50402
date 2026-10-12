@@ -9,9 +9,9 @@
 #include <vector>
 #include "shapes.hpp"
 
-novikov::std::vector< Circle > novikov::readInput(Polygon &pg)
+novikov::c_vec novikov::readInput(Polygon &pg)
 {
-  std::vector< Circle > shapes;
+  c_vec shapes;
   int r = 0;
   while (std::cin >> r)
   {
@@ -48,7 +48,7 @@ novikov::std::vector< Circle > novikov::readInput(Polygon &pg)
   return shapes;
 }
 
-novikov::std::pair< std::size_t, std::size_t > novikov::calculate(const std::vector< Circle > &shapes, const Polygon &pg, std::size_t tries, int seed)
+novikov::size_t_pair novikov::calculate(const c_vec &shapes, const Polygon &pg, std::size_t tries, int seed)
 {
   std::default_random_engine engine(seed);
   std::uniform_real_distribution< double > dist_x(pg.getMinX(), pg.getMaxX());
@@ -72,7 +72,7 @@ novikov::std::pair< std::size_t, std::size_t > novikov::calculate(const std::vec
   return {res_all, res_intersection};
 }
 
-std::size_t novikov::countInside(const std::vector< Circle > &shapes, double x, double y)
+std::size_t novikov::countInside(const c_vec &shapes, double x, double y)
 {
   std::size_t res = 0;
   for (const auto &circle : shapes)
@@ -88,9 +88,9 @@ std::size_t novikov::countInside(const std::vector< Circle > &shapes, double x, 
   return res;
 }
 
-std::pair< double, double > novikov::area(const std::vector< Circle > &shapes, const Polygon &pg, std::size_t threads, std::size_t tries, int seed)
+double_pair novikov::area(const c_vec &shapes, const Polygon &pg, std::size_t threads, std::size_t tries, int seed)
 {
-  std::vector< std::future< std::pair< std::size_t, std::size_t > > > results;
+  std::vector< std::future< size_t_pair > > results;
   results.reserve(threads);
   const std::size_t base_tries = tries / threads;
   const std::size_t remainder = tries % threads;
@@ -106,7 +106,7 @@ std::pair< double, double > novikov::area(const std::vector< Circle > &shapes, c
   std::size_t total_intersection = 0;
   for (std::size_t i = 0; i < threads; ++i)
   {
-    const std::pair< std::size_t, std::size_t > res = results[i].get();
+    const size_t_pair res = results[i].get();
     total_all += res.first;
     total_intersection += res.second;
   }
@@ -114,6 +114,7 @@ std::pair< double, double > novikov::area(const std::vector< Circle > &shapes, c
   const double pg_height = static_cast< double >(pg.getMaxY() - pg.getMinY());
   const double total_area = pg_width * pg_height;
   const double all_area = (total_area * static_cast< double >(total_all)) / static_cast< double >(tries);
-  const double intersection_area = (total_area * static_cast< double >(total_intersection)) / static_cast< double >(tries);
+  const double intersection_area =
+      (total_area * static_cast< double >(total_intersection)) / static_cast< double >(tries);
   return {all_area, intersection_area};
 }

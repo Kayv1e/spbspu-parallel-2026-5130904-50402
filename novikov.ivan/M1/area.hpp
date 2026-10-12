@@ -7,10 +7,14 @@
 
 namespace novikov
 {
-  std::vector< Circle > readInput(Polygon &pg);
-  std::pair< std::size_t, std::size_t > calculate(const std::vector< Circle > &figures, const Polygon &pg, std::size_t tries, int seed);
-  std::size_t countInside(const std::vector< Circle > &figures, double x, double y);
-  std::pair< double, double > area(const std::vector< Circle > &figures, const Polygon &pg, std::size_t threads, std::size_t tries, int seed);
+  using size_t_pair = std::pair< std::size_t, std::size_t >;
+  using double_pair = std::pair< double, double >;
+  using c_vec = std::vector< Circle >;
+
+  c_vec readInput(Polygon &pg);
+  size_t_pair calculate(const c_vec &figures, const Polygon &pg, std::size_t tries, int seed);
+  std::size_t countInside(const c_vec &figures, double x, double y);
+  double_pair area(const c_vec &figures, const Polygon &pg, std::size_t threads, std::size_t tries, int seed);
 }
 
 #endif

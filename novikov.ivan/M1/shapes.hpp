@@ -28,10 +28,10 @@ namespace novikov
     int getMinX() const;
     int getMinY() const;
 
-    void setMaxX() const;
-    void setMaxY() const;
-    void setMinX() const;
-    void setMinY() const;
+    void setMaxX(int x) const;
+    void setMaxY(int y) const;
+    void setMinX(int x) const;
+    void setMinY(int y) const;
 
   private:
     int max_x_;
