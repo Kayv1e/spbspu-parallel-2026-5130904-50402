@@ -3,11 +3,22 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include "commands.hpp"
 
 int main()
 {
   using cmd_t = void (*)(std::istream&, std::ostream&);
   std::unordered_map< std::string, cmd_t > cmds;
+  cmds["circle"] = novikov::circle;
+  cmds["set"] = novikov::set;
+  cmds["show"] = novikov::show;
+  cmds["showset"] = novikov::showset;
+  cmds["frame"] = novikov::frame;
+  cmds["frameset"] = novikov::frameset;
+  cmds["spawn"] = novikov::spawn;
+  cmds["area-on"] = novikov::area_on;
+  cmds["status"] = novikov::status;
+  cmds["wait"] = novikov::wait;
 
   std::string cmd;
   while (std::cin >> cmd)
