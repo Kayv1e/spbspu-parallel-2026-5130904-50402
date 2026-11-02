@@ -18,8 +18,8 @@ int main()
   cmds["set"] = novikov::set;
   cmds["show"] = novikov::show;
   cmds["showset"] = novikov::showset;
-  // cmds["frame"] = novikov::frame;
-  // cmds["frameset"] = novikov::frameset;
+  cmds["frame"] = novikov::frame;
+  cmds["frameset"] = novikov::frameset;
   // cmds["spawn"] = novikov::spawn;
   // cmds["area-on"] = novikov::area_on;
   // cmds["status"] = novikov::status;
@@ -35,14 +35,14 @@ int main()
     catch (const std::out_of_range&)
     {
       std::cout << "<UNKNOWN COMMAND>\n";
-      auto toIgnore = std::numeric_limits< std::streamsize >::max();
-      std::cin.ignore(toIgnore, '\n');
+      const auto to_ignore = std::numeric_limits< std::streamsize >::max();
+      std::cin.ignore(to_ignore, '\n');
     }
     catch (...)
     {
       std::cout << "<INVALID COMMAND>\n";
-      auto toIgnore = std::numeric_limits< std::streamsize >::max();
-      std::cin.ignore(toIgnore, '\n');
+      const auto to_ignore = std::numeric_limits< std::streamsize >::max();
+      std::cin.ignore(to_ignore, '\n');
     }
   }
   if (!std::cin.eof())

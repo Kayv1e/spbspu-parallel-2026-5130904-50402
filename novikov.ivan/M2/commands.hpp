@@ -16,10 +16,10 @@ namespace novikov
   void set(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map& sets);
   void show(std::istream& in, std::ostream& out, ellipse_map& ellipses, set_map&);
   void showset(std::istream& in, std::ostream& out, ellipse_map&, set_map& sets);
-  void frame(std::istream&, std::ostream&, ellipse_map&, set_map&);
-  void frameset(std::istream&, std::ostream&, ellipse_map&, set_map&);
+  void frame(std::istream& in, std::ostream& out, ellipse_map& ellipses, set_map&);
+  void frameset(std::istream& in, std::ostream& out, ellipse_map&, set_map& sets);
   void spawn(std::istream&, std::ostream&, ellipse_map&, set_map&);
-  void area_on(std::istream&, std::ostream&, ellipse_map&, set_map&);
+  void areaOn(std::istream&, std::ostream&, ellipse_map&, set_map&);
   void status(std::istream&, std::ostream&, ellipse_map&, set_map&);
   void wait(std::istream&, std::ostream&, ellipse_map&, set_map&);
 }

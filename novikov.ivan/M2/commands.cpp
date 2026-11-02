@@ -23,7 +23,9 @@ namespace
 void novikov::circle(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map&)
 {
   std::string name;
-  double r, x, y;
+  double r = 0.0;
+  double x = 0.0;
+  double y = 0.0;
   in >> name >> r >> x >> y;
 
   if (ellipses.find(name) != ellipses.end())
@@ -41,7 +43,10 @@ void novikov::circle(std::istream& in, std::ostream&, ellipse_map& ellipses, set
 void novikov::ellipse(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map&)
 {
   std::string name;
-  double hr, vr, x, y;
+  double hr = 0.0;
+  double vr = 0.0;
+  double x = 0.0;
+  double y = 0.0;
   in >> name >> hr >> vr >> x >> y;
 
   if (ellipses.find(name) != ellipses.end())
@@ -116,4 +121,34 @@ void novikov::showset(std::istream& in, std::ostream& out, ellipse_map&, set_map
   {
     outFigure(out, e);
   }
+}
+
+void novikov::frame(std::istream& in, std::ostream& out, ellipse_map& ellipses, set_map&)
+{
+  std::string name;
+  in >> name;
+
+  if (ellipses.find(name) == ellipses.end())
+  {
+    throw std::invalid_argument("figure with this name does't exist");
+  }
+
+  const MinMaxes min_maxes = ellipses[name].getMinMaxes();
+  out << '(' << min_maxes.min_x << ' ' << min_maxes.min_y << ')' << ' ';
+  out << '(' << min_maxes.max_x << ' ' << min_maxes.max_y << ')' << '\n';
+}
+
+void novikov::frameset(std::istream& in, std::ostream& out, ellipse_map&, set_map& sets)
+{
+  std::string name;
+  in >> name;
+
+  if (sets.find(name) == sets.end())
+  {
+    throw std::invalid_argument("set with this name does't exist");
+  }
+
+  const MinMaxes min_maxes = getAllMinMaxes(sets[name]);
+  out << '(' << min_maxes.min_x << ' ' << min_maxes.min_y << ')' << ' ';
+  out << '(' << min_maxes.max_x << ' ' << min_maxes.max_y << ')' << '\n';
 }
