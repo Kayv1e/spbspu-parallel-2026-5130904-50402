@@ -86,8 +86,8 @@ void novikov::circle(std::istream& in, std::ostream&, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
   double r = 0.0;
   double x = 0.0;
@@ -127,8 +127,8 @@ void novikov::ellipse(std::istream& in, std::ostream&, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
   double hr = 0.0;
   double vr = 0.0;
@@ -170,8 +170,8 @@ void novikov::set(std::istream& in, std::ostream&, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string set_name;
   size_t set_size = 0;
 
@@ -228,8 +228,8 @@ void novikov::show(std::istream& in, std::ostream& out, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
 
   try
@@ -256,8 +256,8 @@ void novikov::showset(std::istream& in, std::ostream& out, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
 
   try
@@ -287,8 +287,8 @@ void novikov::frame(std::istream& in, std::ostream& out, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
 
   try
@@ -316,8 +316,8 @@ void novikov::frameset(std::istream& in, std::ostream& out, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
+
   std::string name;
 
   try
@@ -345,7 +345,6 @@ void novikov::spawn(std::istream& in, std::ostream&, Data& data)
 {
   std::string args;
   std::getline(in, args);
-
   std::vector< std::string > tokens = split(args, ' ');
 
   std::string name;
@@ -361,8 +360,12 @@ void novikov::spawn(std::istream& in, std::ostream&, Data& data)
     throw std::range_error(e.what());
   }
 
-  PipeBridge bridge{};
+  if (data.channels.find(name) != data.channels.end())
+  {
+    throw std::invalid_argument("Process with this name already exists");
+  }
 
+  PipeBridge bridge{};
   pid_t pid = fork();
 
   if (pid == -1)
@@ -373,12 +376,55 @@ void novikov::spawn(std::istream& in, std::ostream&, Data& data)
   if (!pid)
   {
     DuplexChannel channel = std::move(bridge).as_child();
-
     child_process(std::move(channel), seed);
-
     return;
   }
 
   DuplexChannel channel = std::move(bridge).as_parent();
   data.channels.insert({name, std::move(channel)});
+}
+
+void novikov::areaOn(std::istream& in, std::ostream&, Data& data)
+{
+  std::string args;
+  std::getline(in, args);
+  std::vector< std::string > tokens = split(args, ' ');
+
+  std::string process_name, calc_name, set_name;
+  size_t threads = 0, tries = 0;
+
+  try
+  {
+    process_name = tokens.at(0);
+    calc_name = tokens.at(1);
+    set_name = tokens.at(2);
+    threads = parseSizeT(tokens.at(3));
+    tries = parseSizeT(tokens.at(4));
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  if (data.channels.find(process_name) == data.channels.end())
+  {
+    throw std::invalid_argument("process with this name doesn't exist");
+  }
+  if (data.calcs.find(calc_name) != data.calcs.end())
+  {
+    throw std::invalid_argument("calc with this name already exist");
+  }
+  if (data.sets.find(set_name) == data.sets.end())
+  {
+    throw std::invalid_argument("set with this name doesn't exist");
+  }
+
+  const ellipse_list& ellipses = data.sets[set_name];
+  DuplexChannel& channel = data.channels.at(process_name);
+
+  size_t size = ellipses.size();
+  channel.write(&size, sizeof(size));
+  channel.write(ellipses.data(), static_cast< ssize_t >(size * sizeof(Ellipse)));
+  channel.write(&threads, sizeof(threads));
+  channel.write(&tries, sizeof(tries));
 }

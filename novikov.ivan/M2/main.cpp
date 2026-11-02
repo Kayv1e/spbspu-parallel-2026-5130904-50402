@@ -19,8 +19,8 @@ int main()
   cmds["showset"] = novikov::showset;
   cmds["frame"] = novikov::frame;
   cmds["frameset"] = novikov::frameset;
-  // cmds["spawn"] = novikov::spawn;
-  // cmds["area-on"] = novikov::area_on;
+  cmds["spawn"] = novikov::spawn;
+  cmds["area-on"] = novikov::areaOn;
   // cmds["status"] = novikov::status;
   // cmds["wait"] = novikov::wait;
 
