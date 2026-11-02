@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <string>
 #include "ellipse.hpp"
 
 namespace
@@ -18,16 +19,95 @@ namespace
 
     out << '(' << e.x << ' ' << e.y << ')' << '\n';
   }
+
+  std::vector< std::string > split(const std::string& str, char delimiter)
+  {
+    std::vector< std::string > res;
+    std::string elem;
+    for (const char& symbol : str)
+    {
+      if (symbol == delimiter && !elem.empty())
+      {
+        res.push_back(elem);
+        elem.clear();
+      }
+      else if (symbol != delimiter)
+      {
+        elem += symbol;
+      }
+    }
+    if (!elem.empty())
+    {
+      res.push_back(elem);
+    }
+
+    return res;
+  }
+
+  size_t parseSizeT(const std::string& line)
+  {
+    const auto first_non_space = line.find_first_not_of(" \t\n");
+    if (first_non_space != std::string::npos && line[first_non_space] == '-')
+    {
+      throw std::invalid_argument("Negative value");
+    }
+
+    const unsigned long long val = std::stoull(line);
+
+    if (val > std::numeric_limits< size_t >::max())
+    {
+      throw std::out_of_range("SizeT overflow");
+    }
+
+    return static_cast< size_t >(val);
+  }
+
+  bool isValidName(const std::string& name)
+  {
+    if (name.empty() || (!std::isalpha(name[0]) && name[0] != '_'))
+    {
+      return false;
+    }
+    for (const char symbol : name)
+    {
+      if (!std::isalnum(symbol) && symbol != '_')
+      {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
-void novikov::circle(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map&)
+void novikov::circle(std::istream& in, std::ostream&, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
   double r = 0.0;
   double x = 0.0;
   double y = 0.0;
-  in >> name >> r >> x >> y;
 
+  try
+  {
+    name = tokens.at(0);
+    r = std::stod(tokens.at(1));
+    x = std::stod(tokens.at(2));
+    y = std::stod(tokens.at(3));
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  ellipse_map& ellipses = data.ellipses;
+
+  if (!isValidName(name))
+  {
+    throw std::invalid_argument("Invalid shape name");
+  }
   if (ellipses.find(name) != ellipses.end())
   {
     throw std::invalid_argument("Circle with this name already exists");
@@ -40,15 +120,37 @@ void novikov::circle(std::istream& in, std::ostream&, ellipse_map& ellipses, set
   ellipses.insert({name, {x, y, r, r}});
 }
 
-void novikov::ellipse(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map&)
+void novikov::ellipse(std::istream& in, std::ostream&, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
   double hr = 0.0;
   double vr = 0.0;
   double x = 0.0;
   double y = 0.0;
-  in >> name >> hr >> vr >> x >> y;
 
+  try
+  {
+    name = tokens.at(0);
+    hr = std::stod(tokens.at(1));
+    vr = std::stod(tokens.at(2));
+    x = std::stod(tokens.at(3));
+    y = std::stod(tokens.at(4));
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  ellipse_map& ellipses = data.ellipses;
+
+  if (!isValidName(name))
+  {
+    throw std::invalid_argument("Invalid shape name");
+  }
   if (ellipses.find(name) != ellipses.end())
   {
     throw std::invalid_argument("Ellipse with this name already exists");
@@ -61,41 +163,82 @@ void novikov::ellipse(std::istream& in, std::ostream&, ellipse_map& ellipses, se
   ellipses.insert({name, {x, y, hr, vr}});
 }
 
-void novikov::set(std::istream& in, std::ostream&, ellipse_map& ellipses, set_map& sets)
+void novikov::set(std::istream& in, std::ostream&, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string set_name;
   size_t set_size = 0;
-  in >> set_name >> set_size;
+
+  try
+  {
+    set_name = tokens.at(0);
+    set_size = parseSizeT(tokens.at(1));
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  set_map& sets = data.sets;
+  ellipse_map& ellipses = data.ellipses;
 
   if (sets.find(set_name) != sets.end())
   {
-    throw std::invalid_argument("set with this name already exist");
+    throw std::invalid_argument("Set with this name already exists");
   }
   if (!set_size)
   {
-    throw std::invalid_argument("incorrect size of set");
+    throw std::invalid_argument("Invalid set size");
+  }
+  if (tokens.size() != set_size + 2)
+  {
+    throw std::invalid_argument("Arguments count mismatch");
   }
 
   std::string figure_name;
   std::vector< Ellipse > s;
   s.reserve(set_size);
-  for (size_t i = 0; i < set_size; ++i)
+  try
   {
-    in >> figure_name;
-    if (ellipses.find(figure_name) == ellipses.end())
+    for (size_t i = 0; i < set_size; ++i)
     {
-      throw std::invalid_argument("figure with this name does't exist: " + figure_name);
+      figure_name = tokens.at(i + 2);
+      if (ellipses.find(figure_name) == ellipses.end())
+      {
+        throw std::invalid_argument("This shape does not exist: " + figure_name);
+      }
+      s.push_back(ellipses[figure_name]);
     }
-    s.push_back(ellipses[figure_name]);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
   }
 
   sets.insert({set_name, std::move(s)});
 }
 
-void novikov::show(std::istream& in, std::ostream& out, ellipse_map& ellipses, set_map&)
+void novikov::show(std::istream& in, std::ostream& out, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
-  in >> name;
+
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  ellipse_map& ellipses = data.ellipses;
 
   if (ellipses.find(name) == ellipses.end())
   {
@@ -106,10 +249,24 @@ void novikov::show(std::istream& in, std::ostream& out, ellipse_map& ellipses, s
   outFigure(out, e);
 }
 
-void novikov::showset(std::istream& in, std::ostream& out, ellipse_map&, set_map& sets)
+void novikov::showset(std::istream& in, std::ostream& out, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
-  in >> name;
+
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  set_map& sets = data.sets;
 
   if (sets.find(name) == sets.end())
   {
@@ -123,14 +280,28 @@ void novikov::showset(std::istream& in, std::ostream& out, ellipse_map&, set_map
   }
 }
 
-void novikov::frame(std::istream& in, std::ostream& out, ellipse_map& ellipses, set_map&)
+void novikov::frame(std::istream& in, std::ostream& out, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
-  in >> name;
+
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  ellipse_map& ellipses = data.ellipses;
 
   if (ellipses.find(name) == ellipses.end())
   {
-    throw std::invalid_argument("figure with this name does't exist");
+    throw std::invalid_argument("This shape does not exist");
   }
 
   const MinMaxes min_maxes = ellipses[name].getMinMaxes();
@@ -138,14 +309,28 @@ void novikov::frame(std::istream& in, std::ostream& out, ellipse_map& ellipses, 
   out << '(' << min_maxes.max_x << ' ' << min_maxes.max_y << ')' << '\n';
 }
 
-void novikov::frameset(std::istream& in, std::ostream& out, ellipse_map&, set_map& sets)
+void novikov::frameset(std::istream& in, std::ostream& out, Data& data)
 {
+  std::string args;
+  std::getline(in, args);
+
+  std::vector< std::string > tokens = split(args, ' ');
   std::string name;
-  in >> name;
+
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  set_map& sets = data.sets;
 
   if (sets.find(name) == sets.end())
   {
-    throw std::invalid_argument("set with this name does't exist");
+    throw std::invalid_argument("This set does not exist");
   }
 
   const MinMaxes min_maxes = getAllMinMaxes(sets[name]);

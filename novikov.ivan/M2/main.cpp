@@ -7,10 +7,9 @@
 
 int main()
 {
-  novikov::ellipse_map circles;
-  novikov::set_map sets;
+  novikov::Data data;
 
-  using cmd_t = void (*)(std::istream&, std::ostream&, novikov::ellipse_map&, novikov::set_map&);
+  using cmd_t = void (*)(std::istream& in, std::ostream& out, novikov::Data& data);
   std::unordered_map< std::string, cmd_t > cmds;
 
   cmds["circle"] = novikov::circle;
@@ -30,9 +29,10 @@ int main()
   {
     try
     {
-      cmds.at(cmd)(std::cin, std::cout, circles, sets);
+      const auto func = cmds.at(cmd);
+      func(std::cin, std::cout, data);
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range& e)
     {
       std::cout << "<UNKNOWN COMMAND>\n";
       const auto to_ignore = std::numeric_limits< std::streamsize >::max();
@@ -41,8 +41,6 @@ int main()
     catch (...)
     {
       std::cout << "<INVALID COMMAND>\n";
-      const auto to_ignore = std::numeric_limits< std::streamsize >::max();
-      std::cin.ignore(to_ignore, '\n');
     }
   }
   if (!std::cin.eof())
