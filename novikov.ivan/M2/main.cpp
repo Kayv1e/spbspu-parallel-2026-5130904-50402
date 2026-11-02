@@ -8,12 +8,16 @@
 int main()
 {
   novikov::ellipse_map circles;
-  using cmd_t = void (*)(std::istream&, std::ostream&, novikov::ellipse_map&);
+  novikov::set_map sets;
+
+  using cmd_t = void (*)(std::istream&, std::ostream&, novikov::ellipse_map&, novikov::set_map&);
   std::unordered_map< std::string, cmd_t > cmds;
+
   cmds["circle"] = novikov::circle;
-  // cmds["set"] = novikov::set;
+  cmds["ellipse"] = novikov::ellipse;
+  cmds["set"] = novikov::set;
   cmds["show"] = novikov::show;
-  // cmds["showset"] = novikov::showset;
+  cmds["showset"] = novikov::showset;
   // cmds["frame"] = novikov::frame;
   // cmds["frameset"] = novikov::frameset;
   // cmds["spawn"] = novikov::spawn;
@@ -26,7 +30,7 @@ int main()
   {
     try
     {
-      cmds.at(cmd)(std::cin, std::cout, circles);
+      cmds.at(cmd)(std::cin, std::cout, circles, sets);
     }
     catch (const std::out_of_range&)
     {
