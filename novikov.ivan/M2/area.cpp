@@ -59,8 +59,7 @@ std::pair< size_t, size_t > novikov::calc(
   return {count_of_total_coverage, count_of_intersection};
 }
 
-const std::pair< double, double > novikov::area(
-    const ellipse_list& ellipses, size_t threads, size_t tries, size_t seed)
+const std::pair< double, double > novikov::area(const ellipse_list& ellipses, size_t threads, size_t tries, size_t seed)
 {
   if (!threads)
   {

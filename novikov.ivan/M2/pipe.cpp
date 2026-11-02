@@ -59,8 +59,8 @@ novikov::Pipe::Pipe()
 }
 
 novikov::DuplexChannel::DuplexChannel(UniqueFd read, UniqueFd write) noexcept:
-    read_fd_(std::move(read)),
-    write_fd_(std::move(write))
+  read_fd_(std::move(read)),
+  write_fd_(std::move(write))
 {}
 
 ssize_t novikov::DuplexChannel::write(const void* b, ssize_t k)
