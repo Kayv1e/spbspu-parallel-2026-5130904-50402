@@ -5,7 +5,7 @@
 
 namespace novikov
 {
-  struct UniqueFd
+  class UniqueFd
   {
   public:
     constexpr UniqueFd() noexcept = default;
@@ -33,23 +33,24 @@ namespace novikov
     Pipe();
   };
 
-  struct DuplexChannel
+  class DuplexChannel
   {
   public:
     DuplexChannel(UniqueFd read, UniqueFd write) noexcept;
     ssize_t write(const void* b, ssize_t k);
     ssize_t read(void* b, ssize_t k);
+    int getReadFd() const noexcept;
 
   private:
     UniqueFd read_fd_, write_fd_;
   };
 
-  struct PipeBridge
+  class PipeBridge
   {
   public:
     PipeBridge();
-    DuplexChannel as_parent() &&;
-    DuplexChannel as_child() &&;
+    DuplexChannel asParent() &&;
+    DuplexChannel asChild() &&;
   private:
     UniqueFd p2c_read_;
     UniqueFd p2c_write_;

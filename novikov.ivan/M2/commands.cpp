@@ -1,9 +1,11 @@
 #include "commands.hpp"
 #include <stdexcept>
 #include <cmath>
+#include <iomanip>
 #include <limits>
 #include <iostream>
 #include <string>
+#include <poll.h>
 #include <unistd.h>
 #include "child.hpp"
 #include "pipe.hpp"
@@ -79,6 +81,46 @@ namespace
       }
     }
     return true;
+  }
+
+  void printCalcResult(std::ostream& out, const novikov::CalcRes& res)
+  {
+    const auto old_flags = out.flags();
+    const auto old_prec = out.precision();
+    out << res.process_name << ' ' << res.time << ' ' << std::fixed << std::setprecision(3) << res.result << '\n';
+    out.flags(old_flags);
+    out.precision(old_prec);
+  }
+
+  void updateProcess(const std::string& proc_name, novikov::Data& data)
+  {
+    auto& queue = data.proc_queues[proc_name];
+    auto& channel = data.channels.at(proc_name);
+
+    while (!queue.empty())
+    {
+      pollfd pfd{};
+      pfd.fd = channel.getReadFd();
+      pfd.events = POLLIN;
+      const int ret = ::poll(&pfd, 1, 0);
+      if (ret > 0 && (pfd.revents & POLLIN))
+      {
+        double res = 0.0;
+        double time = 0.0;
+        channel.read(&res, sizeof(res));
+        channel.read(&time, sizeof(time));
+
+        const std::string finished_calc = queue.front();
+        queue.pop();
+
+        data.calcs[finished_calc].result = res;
+        data.calcs[finished_calc].time = (time > 0.0) ? time : 1.0;
+      }
+      else
+      {
+        break;
+      }
+    }
   }
 }
 
@@ -366,7 +408,7 @@ void novikov::spawn(std::istream& in, std::ostream&, Data& data)
   }
 
   PipeBridge bridge{};
-  pid_t pid = fork();
+  const pid_t pid = fork();
 
   if (pid == -1)
   {
@@ -375,12 +417,12 @@ void novikov::spawn(std::istream& in, std::ostream&, Data& data)
 
   if (!pid)
   {
-    DuplexChannel channel = std::move(bridge).as_child();
-    child_process(std::move(channel), seed);
-    return;
+    DuplexChannel channel = std::move(bridge).asChild();
+    childProcess(std::move(channel), seed);
+    _exit(0);
   }
 
-  DuplexChannel channel = std::move(bridge).as_parent();
+  DuplexChannel channel = std::move(bridge).asParent();
   data.channels.insert({name, std::move(channel)});
 }
 
@@ -408,15 +450,15 @@ void novikov::areaOn(std::istream& in, std::ostream&, Data& data)
 
   if (data.channels.find(process_name) == data.channels.end())
   {
-    throw std::invalid_argument("process with this name doesn't exist");
+    throw std::invalid_argument("This process does not exist");
   }
   if (data.calcs.find(calc_name) != data.calcs.end())
   {
-    throw std::invalid_argument("calc with this name already exist");
+    throw std::invalid_argument("Calc with this name already exists");
   }
   if (data.sets.find(set_name) == data.sets.end())
   {
-    throw std::invalid_argument("set with this name doesn't exist");
+    throw std::invalid_argument("This set does not exist");
   }
 
   const ellipse_list& ellipses = data.sets[set_name];
@@ -427,4 +469,82 @@ void novikov::areaOn(std::istream& in, std::ostream&, Data& data)
   channel.write(ellipses.data(), static_cast< ssize_t >(size * sizeof(Ellipse)));
   channel.write(&threads, sizeof(threads));
   channel.write(&tries, sizeof(tries));
+
+  data.calcs.insert({calc_name, {process_name, -1.0, -1.0}});
+  data.proc_queues[process_name].push(calc_name);
+}
+
+void novikov::status(std::istream& in, std::ostream& out, Data& data)
+{
+  std::string args;
+  std::getline(in, args);
+  std::vector< std::string > tokens = split(args, ' ');
+  std::string name;
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+
+  if (data.calcs.find(name) == data.calcs.end())
+  {
+    throw std::invalid_argument("This calc does not exist");
+  }
+
+  const std::string& process_name = data.calcs[name].process_name;
+  updateProcess(process_name, data);
+
+  const CalcRes& res = data.calcs[name];
+  if (res.time >= 0.0 && res.result >= 0.0)
+  {
+    printCalcResult(out, res);
+  }
+  else
+  {
+    out << res.process_name << " <IN PROGRESS>\n";
+  }
+}
+
+void novikov::wait(std::istream& in, std::ostream& out, Data& data)
+{
+  std::string args;
+  std::getline(in, args);
+  std::vector< std::string > tokens = split(args, ' ');
+  std::string name;
+  try
+  {
+    name = tokens.at(0);
+  }
+  catch (const std::out_of_range& e)
+  {
+    throw std::range_error(e.what());
+  }
+  if (data.calcs.find(name) == data.calcs.end())
+  {
+    throw std::invalid_argument("This calc does not exist");
+  }
+
+  const std::string& process_name = data.calcs[name].process_name;
+  DuplexChannel& channel = data.channels.at(process_name);
+  auto& queue = data.proc_queues[process_name];
+
+  while (data.calcs[name].time < 0.0 && !queue.empty())
+  {
+    double res = 0.0;
+    double time = 0.0;
+    channel.read(&res, sizeof(res));
+    channel.read(&time, sizeof(time));
+
+    const std::string finished_calc = queue.front();
+    queue.pop();
+
+    data.calcs[finished_calc].result = res;
+    data.calcs[finished_calc].time = (time > 0.0) ? time : 1.0;
+  }
+
+  const CalcRes& res = data.calcs[name];
+  printCalcResult(out, res);
 }

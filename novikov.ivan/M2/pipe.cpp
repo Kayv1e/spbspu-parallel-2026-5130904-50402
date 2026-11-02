@@ -66,10 +66,10 @@ novikov::DuplexChannel::DuplexChannel(UniqueFd read, UniqueFd write) noexcept:
 ssize_t novikov::DuplexChannel::write(const void* b, ssize_t k)
 {
   ssize_t r = 0;
-  const char* bytes = static_cast< const char* >(b);
+  const char* const bytes = static_cast< const char* >(b);
   while (r < k)
   {
-    ssize_t err = ::write(write_fd_.get(), bytes + r, static_cast< size_t >(k - r));
+    const ssize_t err = ::write(write_fd_.get(), bytes + r, static_cast< size_t >(k - r));
     if (err <= 0)
     {
       throw std::system_error(errno, std::generic_category(), "pip write error");
@@ -82,10 +82,10 @@ ssize_t novikov::DuplexChannel::write(const void* b, ssize_t k)
 ssize_t novikov::DuplexChannel::read(void* b, ssize_t k)
 {
   ssize_t r = 0;
-  char* bytes = static_cast< char* >(b);
+  char* const bytes = static_cast< char* >(b);
   while (r < k)
   {
-    ssize_t err = ::read(read_fd_.get(), bytes + r, static_cast< size_t >(k - r));
+    const ssize_t err = ::read(read_fd_.get(), bytes + r, static_cast< size_t >(k - r));
     if (err <= 0)
     {
       throw std::system_error(errno, std::generic_category(), "pip read error");
@@ -93,6 +93,11 @@ ssize_t novikov::DuplexChannel::read(void* b, ssize_t k)
     r += err;
   }
   return r;
+}
+
+int novikov::DuplexChannel::getReadFd() const noexcept
+{
+  return read_fd_.get();
 }
 
 novikov::PipeBridge::PipeBridge()
@@ -105,14 +110,14 @@ novikov::PipeBridge::PipeBridge()
   c2p_write_ = std::move(c2p.write);
 }
 
-novikov::DuplexChannel novikov::PipeBridge::as_parent() &&
+novikov::DuplexChannel novikov::PipeBridge::asParent() &&
 {
   p2c_read_.reset();
   c2p_write_.reset();
   return DuplexChannel(std::move(c2p_read_), std::move(p2c_write_));
 }
 
-novikov::DuplexChannel novikov::PipeBridge::as_child() &&
+novikov::DuplexChannel novikov::PipeBridge::asChild() &&
 {
   p2c_write_.reset();
   c2p_read_.reset();

@@ -21,8 +21,8 @@ int main()
   cmds["frameset"] = novikov::frameset;
   cmds["spawn"] = novikov::spawn;
   cmds["area-on"] = novikov::areaOn;
-  // cmds["status"] = novikov::status;
-  // cmds["wait"] = novikov::wait;
+  cmds["status"] = novikov::status;
+  cmds["wait"] = novikov::wait;
 
   std::string cmd;
   while (std::cin >> cmd)
